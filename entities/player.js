@@ -59,16 +59,18 @@ function _dropBomb() {
 
 export function checkPlayerHit(gameOver) {
   if (S.invincible) return;
-  S.eBullets.forEach(b => {
+  // Iterate backwards so splice doesn't skip elements; avoids reassigning
+  // S.eBullets which would throw a TypeError on an ES-module namespace object.
+  for (let i = S.eBullets.length - 1; i >= 0; i--) {
+    const b = S.eBullets[i];
     if (_overlap(S.player.x, S.player.y, 14, 14, b.x, b.y, b.w||5, b.h||5)) {
       S.setHealth(S.health - (b.dmg || 10));
       S.setInvincible(60);
       spawnExplosion(S.player.x, S.player.y, 10, ['#ff4400','#ff8800','#ffffff']);
-      b._dead = true;
-      if (S.health <= 0) gameOver();
+      S.eBullets.splice(i, 1);
+      if (S.health <= 0) { gameOver(); return; }
     }
-  });
-  S.eBullets = S.eBullets.filter(b => !b._dead);
+  }
 }
 
 function _overlap(ax,ay,aw,ah,bx,by,bw,bh) {

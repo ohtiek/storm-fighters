@@ -66,16 +66,14 @@ export async function loadAllAssets(onProgress) {
   let done = 0;
 
   for (const entry of MANIFEST) {
-    // Build the procedural fallback first via the standard image pipeline.
-    // canvas → toDataURL → HTMLImageElement → PIXI.Texture.from(img)
-    // This path is the most widely-supported way to create a GPU texture in
-    // PixiJS v8: it goes through the normal image upload system rather than
-    // CanvasSource, which is absent or broken in some v8 CDN builds.
+    // Build the procedural fallback via createImageBitmap.
+    // ImageBitmap is already fully decoded and maps directly to ImageSource in
+    // PixiJS v8 — avoiding CanvasSource, which is absent or broken in the CDN
+    // build, and avoiding the HTMLImageElement path that can produce a
+    // zero-sized texture before the GPU upload completes.
     const canvas = entry.fallback();
-    const img = new Image();
-    img.src = canvas.toDataURL('image/png');
-    await new Promise(r => { img.onload = r; img.onerror = r; });
-    let tex = PIXI.Texture.from(img);
+    const bitmap = await createImageBitmap(canvas);
+    let tex = PIXI.Texture.from(bitmap);
 
     // Optionally replace with the real PNG if one exists and is a real asset
     // (width >= 16 guards against degenerate textures from 404 responses).

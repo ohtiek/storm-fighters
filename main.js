@@ -164,7 +164,7 @@ function loop() {
   requestAnimationFrame(loop);
 
   if (phase === 'playing') {
-    _update();
+    try { _update(); } catch (e) { console.error('[storm] _update error:', e); }
     _draw();
   } else {
     updateBackground(0.5);   // animate background on title/game-over
