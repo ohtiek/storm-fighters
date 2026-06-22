@@ -218,7 +218,12 @@ function _spawnPlanet(stageNum) {
   gShad.addColorStop(0,'rgba(0,0,0,0)'); gShad.addColorStop(0.6,'rgba(0,0,0,0)'); gShad.addColorStop(1,'rgba(0,0,0,0.6)');
   c.fillStyle=gShad; c.fillRect(cx-r,cy-r,r*2,r*2); c.restore();
 
-  const tex  = PIXI.Texture.from(cv);
+  // CanvasSource can be absent in some PixiJS v8 CDN builds; guard the throw
+  // so a missing planet decoration never prevents the game from starting.
+  let tex;
+  try { tex = PIXI.Texture.from(cv); } catch { return; }
+  if (!tex || tex.width < 4) return;
+
   planetSprite = new PIXI.Sprite(tex);
   planetSprite.anchor.set(0.5);
   planetSprite.x = fromLeft ? -r - 20 : GAME_W + r + 20;
