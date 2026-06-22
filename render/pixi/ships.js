@@ -208,6 +208,10 @@ export function drawShipPreview(canvas, ship) {
   c.restore();
 }
 
+export function clearEnemyLayer() {
+  getLayer('ENEMIES').removeChildren();
+}
+
 function _removeSprite(s) {
   if (s && s.parent) s.parent.removeChild(s);
 }

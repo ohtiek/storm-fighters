@@ -83,8 +83,9 @@ export function updateEnemies(gameOver) {
     S.addKill();
     S.addScore(e.pts);
 
-    // Notify render layer (PixiJS explosions + score popups)
-    _onEnemyDeath?.(e);
+    // Notify render layer (PixiJS explosions + score popups).
+    // Wrap in try/catch — a hook error must not prevent the enemy being removed.
+    try { _onEnemyDeath?.(e); } catch (err) { console.error('[storm] death hook:', err); }
 
     // Drop pickups — weapon bubble carries branch A or B
     const chance = e.type === 'boss' ? 1 : 0.40;

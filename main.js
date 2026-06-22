@@ -21,7 +21,8 @@ import { loadAllAssets }                     from './render/pixi/assetLoader.js'
 import { initBackground, updateBackground }  from './render/pixi/background.js';
 import { initPlayerSprite, updatePlayerSprite,
          ensureEnemySprite, updateEnemySprite,
-         removeEnemySprite, drawShipPreview } from './render/pixi/ships.js';
+         removeEnemySprite, drawShipPreview,
+         clearEnemyLayer } from './render/pixi/ships.js';
 import { syncPlayerBullets, syncEnemyBullets,
          removePlayerBullet, removeEnemyBullet,
          clearAllBulletSprites }             from './render/pixi/bullets.js';
@@ -131,6 +132,7 @@ function startGame() {
   resetBoss();
   setBossSpawned(false);
   resetSpawnTimer();
+  clearEnemyLayer();
   clearAllBulletSprites(bullets, eBullets);
   clearAllEffects();
 

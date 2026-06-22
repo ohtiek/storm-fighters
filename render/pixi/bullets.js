@@ -17,11 +17,24 @@ const WEAPON_COLORS = {
 };
 
 // ── Create / update player bullet sprites ─────────────────────────
+const _knownPlayerBullets = new Set();
+
 export function syncPlayerBullets(bullets) {
-  const layer = getLayer('PLAYER_BULLETS');
+  const layer   = getLayer('PLAYER_BULLETS');
+  const current = new Set(bullets);
+
+  // Sprites for bullets removed mid-frame (hit enemy, bomb, etc.) stay in the
+  // layer unless we explicitly remove them — do that before updating survivors.
+  for (const b of _knownPlayerBullets) {
+    if (!current.has(b)) {
+      removePlayerBullet(b);
+      _knownPlayerBullets.delete(b);
+    }
+  }
 
   bullets.forEach(b => {
     if (!b._sprite) b._sprite = _createBulletSprite(b, layer);
+    _knownPlayerBullets.add(b);
     _updateBulletSprite(b);
   });
 }
@@ -109,8 +122,19 @@ function _updateBulletSprite(b) {
 }
 
 // ── Enemy bullets ─────────────────────────────────────────────────
+const _knownEnemyBullets = new Set();
+
 export function syncEnemyBullets(eBullets) {
-  const layer = getLayer('ENEMY_BULLETS');
+  const layer   = getLayer('ENEMY_BULLETS');
+  const current = new Set(eBullets);
+
+  // Remove sprites for bullets that were spliced out (hit player, off-screen, bomb)
+  for (const b of _knownEnemyBullets) {
+    if (!current.has(b)) {
+      removeEnemyBullet(b);
+      _knownEnemyBullets.delete(b);
+    }
+  }
 
   eBullets.forEach(b => {
     if (!b._sprite) {
@@ -123,6 +147,7 @@ export function syncEnemyBullets(eBullets) {
       layer.addChild(sprite);
       b._sprite = sprite;
     }
+    _knownEnemyBullets.add(b);
     b._sprite.x = b.x;
     b._sprite.y = b.y;
     // Pulse brightness
@@ -141,6 +166,8 @@ export function removeEnemyBullet(b) {
 export function clearAllBulletSprites(bullets, eBullets) {
   bullets.forEach(removePlayerBullet);
   eBullets.forEach(removeEnemyBullet);
+  _knownPlayerBullets.clear();
+  _knownEnemyBullets.clear();
   getLayer('PLAYER_BULLETS').removeChildren();
   getLayer('ENEMY_BULLETS').removeChildren();
 }
