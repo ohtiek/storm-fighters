@@ -9,6 +9,9 @@ import { spawnExplosion } from '../render/effects.js';
 
 let fireTimer = 0;
 let bombWasDown = false;
+let _onBombDrop = null;
+
+export function setBombDropHook(fn) { _onBombDrop = fn; }
 
 export function updatePlayer(gameOver) {
   const ship = SHIPS[S.selectedShip];
@@ -44,8 +47,14 @@ function _dropBomb() {
     e.hp -= 50;
     spawnExplosion(e.x, e.y, 15, ['#ff6600','#ffaa00','#ffffff']);
   });
-  S.enemies = S.enemies.filter(e => e.hp > 0);
-  S.eBullets = [];
+  const dead = S.enemies.filter(e => e.hp <= 0);
+  // Notify render layer to remove sprites BEFORE modifying arrays
+  _onBombDrop?.(S.eBullets, dead);
+  // Mutate in-place to keep live ES module bindings valid
+  S.eBullets.length = 0;
+  for (let i = S.enemies.length - 1; i >= 0; i--) {
+    if (S.enemies[i].hp <= 0) S.enemies.splice(i, 1);
+  }
 }
 
 export function checkPlayerHit(gameOver) {

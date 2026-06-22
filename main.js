@@ -36,7 +36,8 @@ import { updateHUD }                         from './render/pixi/hud.js';
 // ── Game logic (unchanged) ────────────────────────────────────────
 import { resetWeaponToShip }                        from './weapons/weaponManager.js';
 import { tickBullets }                              from './weapons/index.js';
-import { updatePlayer, checkPlayerHit }             from './entities/player.js';
+import { updatePlayer, checkPlayerHit,
+         setBombDropHook }                           from './entities/player.js';
 import { spawnEnemy, spawnBoss, updateEnemies,
          setEnemyDeathHook }                        from './entities/enemy.js';
 import { updatePickups }                            from './entities/pickup.js';
@@ -75,7 +76,13 @@ async function boot() {
   initFlashText();
   initBossWarning();
 
-  // 6. Wire enemy death hook → Pixi explosions + score popups
+  // 6. Wire bomb drop hook → Pixi sprite removal
+  setBombDropHook((deadBullets, deadEnemies) => {
+    deadBullets.forEach(b => removeEnemyBullet(b));
+    deadEnemies.forEach(e => removeEnemySprite(e));
+  });
+
+  // Wire enemy death hook → Pixi explosions + score popups
   setEnemyDeathHook(e => {
     if (e.type === '_hit') {
       spawnExplosion(e.x, e.y, false);
