@@ -66,24 +66,24 @@ export async function loadAllAssets(onProgress) {
   let done = 0;
 
   for (const entry of MANIFEST) {
-    // Always build a valid canvas texture first — guaranteed non-null.
-    // PIXI.Texture.from(canvas) can return a truthy-but-invalid object in
-    // some PixiJS v8 builds, so we use the explicit CanvasSource API when
-    // available and fall back to Texture.from only as a last resort.
+    // Build the procedural fallback first via the standard image pipeline.
+    // canvas → toDataURL → HTMLImageElement → PIXI.Texture.from(img)
+    // This path is the most widely-supported way to create a GPU texture in
+    // PixiJS v8: it goes through the normal image upload system rather than
+    // CanvasSource, which is absent or broken in some v8 CDN builds.
     const canvas = entry.fallback();
-    let tex;
-    try {
-      tex = new PIXI.Texture({ source: new PIXI.CanvasSource({ resource: canvas }) });
-    } catch {
-      tex = PIXI.Texture.from(canvas);
-    }
+    const img = new Image();
+    img.src = canvas.toDataURL('image/png');
+    await new Promise(r => { img.onload = r; img.onerror = r; });
+    let tex = PIXI.Texture.from(img);
 
-    // Try to override with the real PNG if it exists.
+    // Optionally replace with the real PNG if one exists and is a real asset
+    // (width >= 16 guards against degenerate textures from 404 responses).
     try {
       const real = await PIXI.Assets.load({ alias: entry.alias, src: entry.src });
-      if (real && real.valid && real.width > 0) tex = real;
+      if (real?.valid && real.width >= 16 && real.height >= 16) tex = real;
     } catch {
-      // file not found — keep the procedural texture above
+      // file not found — keep the procedural texture
     }
 
     T[entry.alias] = tex;
