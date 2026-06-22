@@ -66,11 +66,13 @@ export async function loadAllAssets(onProgress) {
   let done = 0;
 
   for (const entry of MANIFEST) {
-    let tex;
+    let tex = null;
     try {
       tex = await PIXI.Assets.load({ alias: entry.alias, src: entry.src });
     } catch {
-      // File not found — generate procedural placeholder
+      // file not found or network error — fall through to procedural fallback
+    }
+    if (!tex) {
       const canvas = entry.fallback();
       tex = PIXI.Texture.from(canvas);
     }
