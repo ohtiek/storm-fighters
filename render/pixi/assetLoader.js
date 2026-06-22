@@ -66,19 +66,18 @@ export async function loadAllAssets(onProgress) {
   let done = 0;
 
   for (const entry of MANIFEST) {
+    let tex;
     try {
-      await PIXI.Assets.load({ alias: entry.alias, src: entry.src });
+      tex = await PIXI.Assets.load({ alias: entry.alias, src: entry.src });
     } catch {
       // File not found — generate procedural placeholder
       const canvas = entry.fallback();
-      PIXI.Assets.cache.set(entry.alias, PIXI.Texture.from(canvas));
+      tex = PIXI.Texture.from(canvas);
     }
+    T[entry.alias] = tex;
     done++;
     onProgress?.(done / MANIFEST.length);
   }
-
-  // Build named textures
-  MANIFEST.forEach(e => { T[e.alias] = PIXI.Texture.from(e.alias); });
 
   // Build sprite sheet frame arrays
   FRAMES['enemy-fighter'] = _sliceSheet(T['enemy-fighter'],  4, 1, 96,  96);
