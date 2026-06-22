@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>STORM FIGHTERS</title>
+<link rel="stylesheet" href="style.css">
+
+<!-- PixiJS v8 via importmap — no bundler needed -->
+<script type="importmap">
+{
+  "imports": {
+    "pixi.js": "https://cdn.jsdelivr.net/npm/pixi.js@8/dist/pixi.mjs"
+  }
+}
+</script>
+</head>
+<body>
+
+<!-- Loading screen — shown before PixiJS finishes booting -->
+<div id="loading-screen">
+  <div class="loading-title">STORM FIGHTERS</div>
+  <div class="loading-sub">LOADING ASSETS</div>
+  <div class="loading-track">
+    <div class="loading-bar" id="loading-bar"></div>
+  </div>
+  <div class="loading-pct" id="loading-pct">0%</div>
+</div>
+
+<!-- Main game shell — hidden until assets are ready -->
+<div id="shell" style="display:none">
+  <div id="game-area">
+    <!-- PixiJS replaces the <canvas> element on boot -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- HUD overlay — pointer-events:none so it doesn't block game input -->
+    <div id="hud-overlay">
+      <div class="hud-top">
+        <div>
+          <div class="hl">SCORE</div>
+          <div class="hv" id="hv-score">00000000</div>
+        </div>
+        <div style="text-align:center">
+          <div class="hl">STAGE</div>
+          <div class="hv" id="hv-stage" style="font-size:18px">1</div>
+        </div>
+        <div style="text-align:right">
+          <div class="hl">HI-SCORE</div>
+          <div class="hv y" id="hv-hi">00000000</div>
+        </div>
+      </div>
+      <div class="hud-bars">
+        <div class="bar-icon">HP</div>
+        <div class="bar-wrap"><div class="bar-fill-hp" id="hb-hp" style="width:100%"></div></div>
+        <div class="bar-icon">WP</div>
+        <div class="bar-wrap"><div class="bar-fill-pw" id="hb-pw" style="width:0%"></div></div>
+        <div id="wmode-badge">TWIN</div>
+        <div class="bomb-pips" id="bomb-pips"></div>
+      </div>
+    </div>
+
+    <!-- Title screen -->
+    <div class="screen" id="screen-title">
+      <div class="game-title" id="title-text">STORM<br>FIGHTERS</div>
+      <div class="game-sub">— OPERATION DARK HORIZON —</div>
+      <div class="ship-row" id="ship-row"></div>
+      <button class="big-btn" id="btn-start">LAUNCH</button>
+      <div class="hint">
+        <span>Joystick</span> — Move &nbsp;|&nbsp; <span>FIRE</span> — Shoot<br>
+        <span>BOMB</span> — Screen Clear &nbsp;|&nbsp;
+        Collect <span style="color:#ffdd44">Gold</span>/<span style="color:#44ffdd">Cyan</span>
+        <span>W</span> bubbles to branch weapons
+      </div>
+    </div>
+
+    <!-- Game Over screen -->
+    <div class="screen hidden" id="screen-gameover">
+      <div id="go-title">SHOT DOWN</div>
+      <div id="final-score"></div>
+      <div id="hi-score-msg"></div>
+      <button class="big-btn" id="btn-retry" style="margin-top:22px">FLY AGAIN</button>
+      <button class="sec-btn" id="btn-toTitle">SELECT SHIP</button>
+    </div>
+  </div>
+
+  <!-- Touch controls: BELOW canvas, never overlapping -->
+  <div id="controls">
+    <div id="joystick-zone">
+      <div id="joystick-base"></div>
+      <div id="joystick-knob"></div>
+    </div>
+    <div id="btn-group">
+      <div class="action-btn" id="btn-fire">FIRE</div>
+      <div class="action-btn" id="btn-bomb">BOMB</div>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="main.js"></script>
+</body>
+</html>
