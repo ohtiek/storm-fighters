@@ -72,7 +72,7 @@ export function updateEnemies(gameOver) {
       }
     });
   });
-  S.bullets = S.bullets.filter(b => !b._dead);
+  S.filterBullets(b => !b._dead);
 
   // Dead enemies
   S.enemies.filter(e => e.hp <= 0).forEach(e => {
@@ -111,7 +111,7 @@ export function updateEnemies(gameOver) {
       setTimeout(() => { S.nextStage(); S.setBossSpawned(false); }, 1200);
     }
   });
-  S.enemies = S.enemies.filter(e => e.hp > 0);
+  S.filterEnemies(e => e.hp > 0);
 
   // Enemy body ↔ player
   if (!S.invincible) {

@@ -83,6 +83,11 @@ export function resetEntities() {
   pickups   = [];
 }
 
+export function filterBullets(fn)  { bullets  = bullets.filter(fn);  }
+export function filterEBullets(fn) { eBullets = eBullets.filter(fn); }
+export function clearEBullets()    { eBullets = []; }
+export function filterEnemies(fn)  { enemies  = enemies.filter(fn);  }
+
 // ── Selected ship ────────────────────────────────────────────────
 export let selectedShip = 0;
 export function setSelectedShip(i) { selectedShip = i; }

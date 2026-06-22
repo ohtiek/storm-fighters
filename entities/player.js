@@ -44,8 +44,8 @@ function _dropBomb() {
     e.hp -= 50;
     spawnExplosion(e.x, e.y, 15, ['#ff6600','#ffaa00','#ffffff']);
   });
-  S.enemies = S.enemies.filter(e => e.hp > 0);
-  S.eBullets = [];
+  S.filterEnemies(e => e.hp > 0);
+  S.clearEBullets();
 }
 
 export function checkPlayerHit(gameOver) {
@@ -59,7 +59,7 @@ export function checkPlayerHit(gameOver) {
       if (S.health <= 0) gameOver();
     }
   });
-  S.eBullets = S.eBullets.filter(b => !b._dead);
+  S.filterEBullets(b => !b._dead);
 }
 
 function _overlap(ax,ay,aw,ah,bx,by,bw,bh) {
