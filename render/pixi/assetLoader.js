@@ -66,16 +66,26 @@ export async function loadAllAssets(onProgress) {
   let done = 0;
 
   for (const entry of MANIFEST) {
-    let tex = null;
+    // Always build a valid canvas texture first — guaranteed non-null.
+    // PIXI.Texture.from(canvas) can return a truthy-but-invalid object in
+    // some PixiJS v8 builds, so we use the explicit CanvasSource API when
+    // available and fall back to Texture.from only as a last resort.
+    const canvas = entry.fallback();
+    let tex;
     try {
-      tex = await PIXI.Assets.load({ alias: entry.alias, src: entry.src });
+      tex = new PIXI.Texture({ source: new PIXI.CanvasSource({ resource: canvas }) });
     } catch {
-      // file not found or network error — fall through to procedural fallback
-    }
-    if (!tex) {
-      const canvas = entry.fallback();
       tex = PIXI.Texture.from(canvas);
     }
+
+    // Try to override with the real PNG if it exists.
+    try {
+      const real = await PIXI.Assets.load({ alias: entry.alias, src: entry.src });
+      if (real && real.valid && real.width > 0) tex = real;
+    } catch {
+      // file not found — keep the procedural texture above
+    }
+
     T[entry.alias] = tex;
     done++;
     onProgress?.(done / MANIFEST.length);
