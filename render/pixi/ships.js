@@ -111,18 +111,19 @@ export function ensureEnemySprite(e) {
   const frames = FRAMES[key];
   const layer  = getLayer('ENEMIES');
 
+  const scale = e.type === 'boss' ? 0.72 : 0.85;
   if (frames && frames.length > 1) {
     const anim = new PIXI.AnimatedSprite(frames);
     anim.anchor.set(0.5);
     anim.animationSpeed = 0.08 + Math.random() * 0.04;
     anim.play();
-    anim.scale.set(e.type === 'boss' ? 0.72 : 0.36);
+    anim.scale.set(scale);
     layer.addChild(anim);
     e._sprite = anim;
   } else {
     const s = new PIXI.Sprite(T[key] ?? PIXI.Texture.WHITE);
     s.anchor.set(0.5);
-    s.scale.set(e.type === 'boss' ? 0.72 : 0.36);
+    s.scale.set(scale);
     layer.addChild(s);
     e._sprite = s;
   }

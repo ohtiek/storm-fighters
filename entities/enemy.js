@@ -63,19 +63,23 @@ export function updateEnemies(gameOver) {
   });
 
   // Bullet ↔ enemy collision
-  S.bullets.forEach(b => {
-    S.enemies.forEach(e => {
-      const ew = e.type==='boss'?65 : e.type==='bomber'?24 : e.type==='gunship'?28 : 16;
+  for (let bi = S.bullets.length - 1; bi >= 0; bi--) {
+    const b = S.bullets[bi];
+    let hitSingle = false;
+    for (const e of S.enemies) {
+      const ew = e.type==='boss' ? 68 : e.type==='bomber' ? 54 : e.type==='gunship' ? 58 : 50;
       if (_overlap(b.x,b.y,b.w,b.h, e.x,e.y,ew,ew)) {
         e.hp -= b.dmg || 1;
-        if (!b.laser && !b.beam && !b.plasma) b._dead = true;
+        if (!b.laser && !b.beam && !b.plasma) hitSingle = true;
       }
-    });
-  });
-  S.bullets = S.bullets.filter(b => !b._dead);
+    }
+    if (hitSingle) S.bullets.splice(bi, 1);
+  }
 
-  // Dead enemies
-  S.enemies.filter(e => e.hp <= 0).forEach(e => {
+  // Dead enemies — reverse-for so splice doesn't skip; avoids namespace assign
+  for (let i = S.enemies.length - 1; i >= 0; i--) {
+    const e = S.enemies[i];
+    if (e.hp > 0) continue;
     S.addKill();
     S.addScore(e.pts);
 
@@ -110,13 +114,13 @@ export function updateEnemies(gameOver) {
       S.setBoss(null);
       setTimeout(() => { S.nextStage(); S.setBossSpawned(false); }, 1200);
     }
-  });
-  S.enemies = S.enemies.filter(e => e.hp > 0);
+    S.enemies.splice(i, 1);
+  }
 
   // Enemy body ↔ player
   if (!S.invincible) {
     S.enemies.forEach(e => {
-      const ew = e.type === 'boss' ? 60 : 22;
+      const ew = e.type === 'boss' ? 68 : 48;
       if (_overlap(S.player.x, S.player.y, 12, 12, e.x, e.y, ew, ew)) {
         S.setHealth(S.health - 20);
         S.setInvincible(80);
