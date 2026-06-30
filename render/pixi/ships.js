@@ -169,42 +169,261 @@ export function removeEnemySprite(e) {
   }
 }
 
-// ── Title screen previews (still uses Canvas 2D — off-screen) ─────
+// ── Title screen previews (Canvas 2D — off-screen 80×80) ──────────
 export function drawShipPreview(canvas, ship) {
   const c  = canvas.getContext('2d');
-  const w  = canvas.width, h = canvas.height;
-  c.fillStyle = '#030b18'; c.fillRect(0,0,w,h);
-  c.strokeStyle = 'rgba(0,80,160,0.18)'; c.lineWidth = 1;
-  for (let x=0;x<w;x+=10){ c.beginPath(); c.moveTo(x,0); c.lineTo(x,h); c.stroke(); }
-  for (let y=0;y<h;y+=10){ c.beginPath(); c.moveTo(0,y); c.lineTo(w,y); c.stroke(); }
-
-  // Draw ship polygon directly (no PIXI needed for static preview)
-  const sc = Math.min(w,h) / 68;
-  const cx = w/2, cy = h/2+3;
-  c.save(); c.translate(cx, cy); c.scale(sc, sc);
+  const W  = canvas.width, H = canvas.height;
+  const cx = W / 2, cy = H * 0.46;
   const col = ship.color, acc = ship.ac;
+
+  // Background
+  c.fillStyle = '#020c1a';
+  c.fillRect(0, 0, W, H);
+  c.strokeStyle = 'rgba(0,70,160,0.14)';
+  c.lineWidth = 1;
+  for (let x = 0; x < W; x += 8) { c.beginPath(); c.moveTo(x,0); c.lineTo(x,H); c.stroke(); }
+  for (let y = 0; y < H; y += 8) { c.beginPath(); c.moveTo(0,y); c.lineTo(W,y); c.stroke(); }
+
+  c.save();
+  if      (ship.baseShot === 'twin')   _previewRaijin(c, cx, cy, col, acc);
+  else if (ship.baseShot === 'spread') _previewViper(c, cx, cy, col, acc);
+  else                                 _previewThunder(c, cx, cy, col, acc);
+  c.restore();
+}
+
+function _previewFlame(c, x, y, rw, rh, bright, dim) {
+  const g = c.createLinearGradient(x, y, x, y + rh);
+  g.addColorStop(0, bright); g.addColorStop(1, 'rgba(0,0,0,0)');
+  c.fillStyle = g;
+  c.beginPath(); c.ellipse(x, y + rh * 0.5, rw, rh * 0.5, 0, 0, Math.PI * 2); c.fill();
+}
+
+// RAIJIN-X — balanced delta fighter (twin/blue)
+function _previewRaijin(c, cx, cy, col, acc) {
+  // Engine flames (drawn first, behind the ship)
+  c.globalAlpha = 0.85;
+  _previewFlame(c, cx - 10, cy + 20, 5, 14, '#ffcc44', '#ff3300');
+  _previewFlame(c, cx + 10, cy + 20, 5, 14, '#ffcc44', '#ff3300');
+  c.globalAlpha = 1;
+
+  // Wing glow
   c.shadowColor = col; c.shadowBlur = 18;
-  if (ship.baseShot === 'twin') {
-    c.beginPath(); c.moveTo(0,-24); c.lineTo(-20,8); c.lineTo(-8,4); c.lineTo(0,14); c.lineTo(8,4); c.lineTo(20,8); c.closePath();
-    c.fillStyle=col; c.fill();
-    c.beginPath(); c.moveTo(0,-18); c.lineTo(-5,-2); c.lineTo(0,6); c.lineTo(5,-2); c.closePath(); c.fillStyle=acc; c.fill();
-    c.fillStyle='#ff8800'; c.fillRect(-14,8,9,6); c.fillRect(5,8,9,6);
-  } else if (ship.baseShot === 'spread') {
-    c.beginPath(); c.moveTo(0,-26); c.lineTo(-24,12); c.lineTo(-5,6); c.lineTo(0,18); c.lineTo(5,6); c.lineTo(24,12); c.closePath();
-    c.fillStyle=col; c.fill();
-    c.beginPath(); c.moveTo(0,-18); c.lineTo(-5,2); c.lineTo(0,9); c.lineTo(5,2); c.closePath(); c.fillStyle=acc; c.fill();
-    c.fillStyle='#ff4400'; c.fillRect(-11,10,22,6);
-  } else {
-    c.beginPath(); c.moveTo(0,-22); c.lineTo(-14,2); c.lineTo(-22,14); c.lineTo(-8,10); c.lineTo(0,18); c.lineTo(8,10); c.lineTo(22,14); c.lineTo(14,2); c.closePath();
-    c.fillStyle=col; c.fill();
-    c.beginPath(); c.moveTo(0,-14); c.lineTo(-7,5); c.lineTo(0,12); c.lineTo(7,5); c.closePath(); c.fillStyle=acc; c.fill();
+
+  // Main delta wing body
+  const wg = c.createLinearGradient(cx, cy - 28, cx, cy + 20);
+  wg.addColorStop(0, '#ddf6ff'); wg.addColorStop(0.35, col); wg.addColorStop(1, acc);
+  c.beginPath();
+  c.moveTo(cx,      cy - 28);  // nose
+  c.lineTo(cx - 30, cy +  8);  // left wingtip
+  c.lineTo(cx - 14, cy +  5);  // left inner notch
+  c.lineTo(cx - 10, cy + 20);  // left engine pod
+  c.lineTo(cx + 10, cy + 20);  // right engine pod
+  c.lineTo(cx + 14, cy +  5);  // right inner notch
+  c.lineTo(cx + 30, cy +  8);  // right wingtip
+  c.closePath();
+  c.fillStyle = wg; c.fill();
+
+  // Leading-edge highlight
+  c.shadowBlur = 4;
+  c.strokeStyle = 'rgba(180,240,255,0.55)'; c.lineWidth = 1;
+  c.beginPath(); c.moveTo(cx, cy - 28); c.lineTo(cx - 30, cy + 8); c.stroke();
+  c.beginPath(); c.moveTo(cx, cy - 28); c.lineTo(cx + 30, cy + 8); c.stroke();
+
+  // Center spine / fuselage
+  c.shadowBlur = 10;
+  const sg = c.createLinearGradient(cx, cy - 26, cx, cy + 18);
+  sg.addColorStop(0, '#ffffff'); sg.addColorStop(0.5, col); sg.addColorStop(1, acc);
+  c.beginPath();
+  c.moveTo(cx,    cy - 26);
+  c.lineTo(cx - 8, cy + 4);
+  c.lineTo(cx - 6, cy + 20);
+  c.lineTo(cx + 6, cy + 20);
+  c.lineTo(cx + 8, cy + 4);
+  c.closePath();
+  c.fillStyle = sg; c.fill();
+
+  // Cockpit canopy
+  c.shadowColor = '#88eeff'; c.shadowBlur = 10;
+  const cpg = c.createLinearGradient(cx, cy - 22, cx, cy - 4);
+  cpg.addColorStop(0, '#ffffff'); cpg.addColorStop(1, '#44ccff');
+  c.fillStyle = cpg;
+  c.beginPath();
+  c.moveTo(cx,     cy - 22);
+  c.lineTo(cx - 5, cy - 8);
+  c.lineTo(cx,     cy - 3);
+  c.lineTo(cx + 5, cy - 8);
+  c.closePath();
+  c.fill();
+
+  // Engine nacelles
+  c.shadowColor = '#ff8800'; c.shadowBlur = 10;
+  c.fillStyle = acc;
+  c.fillRect(cx - 14, cy + 13, 10, 9);
+  c.fillRect(cx +  4, cy + 13, 10, 9);
+  c.fillStyle = '#ff9900';
+  c.fillRect(cx - 13, cy + 18, 8, 4);
+  c.fillRect(cx +  5, cy + 18, 8, 4);
+
+  // Wingtip cannons
+  c.shadowColor = col; c.shadowBlur = 6;
+  c.fillStyle = '#cce8ff';
+  c.fillRect(cx - 36, cy + 2, 10, 3);
+  c.fillRect(cx + 26, cy + 2, 10, 3);
+}
+
+// VIPER-II — fast wide fighter (spread/orange)
+function _previewViper(c, cx, cy, col, acc) {
+  // Triple engine flames
+  c.globalAlpha = 0.85;
+  for (const xo of [-13, 0, 13]) {
+    _previewFlame(c, cx + xo, cy + 20, 4, 13, '#ffaa22', '#ff3300');
   }
-  c.restore();
-  // Flame
-  c.save(); c.shadowColor='#ff8800'; c.shadowBlur=8;
-  const fy = cy + 14*sc;
-  c.fillStyle='rgba(255,150,0,0.9)'; c.fillRect(cx-3*sc, fy, 6*sc, 7*sc);
-  c.restore();
+  c.globalAlpha = 1;
+
+  // Wing glow
+  c.shadowColor = col; c.shadowBlur = 18;
+
+  // Ultra-wide swept wings
+  const wg = c.createLinearGradient(cx, cy - 30, cx, cy + 20);
+  wg.addColorStop(0, '#fff4ee'); wg.addColorStop(0.3, col); wg.addColorStop(1, acc);
+  c.beginPath();
+  c.moveTo(cx,      cy - 30);  // nose tip
+  c.lineTo(cx - 35, cy +  0);  // far left wingtip
+  c.lineTo(cx - 20, cy +  8);  // left inner indent
+  c.lineTo(cx - 16, cy + 20);  // left engine flank
+  c.lineTo(cx + 16, cy + 20);  // right engine flank
+  c.lineTo(cx + 20, cy +  8);  // right inner indent
+  c.lineTo(cx + 35, cy +  0);  // far right wingtip
+  c.closePath();
+  c.fillStyle = wg; c.fill();
+
+  // Leading-edge highlight lines
+  c.shadowBlur = 4;
+  c.strokeStyle = 'rgba(255,210,160,0.5)'; c.lineWidth = 1;
+  c.beginPath(); c.moveTo(cx, cy - 30); c.lineTo(cx - 35, cy); c.stroke();
+  c.beginPath(); c.moveTo(cx, cy - 30); c.lineTo(cx + 35, cy); c.stroke();
+
+  // Fuselage stripe
+  c.shadowBlur = 10;
+  const sg = c.createLinearGradient(cx, cy - 28, cx, cy + 20);
+  sg.addColorStop(0, '#ffffff'); sg.addColorStop(0.4, col); sg.addColorStop(1, acc);
+  c.beginPath();
+  c.moveTo(cx,      cy - 28);
+  c.lineTo(cx - 11, cy +  2);
+  c.lineTo(cx - 14, cy + 20);
+  c.lineTo(cx + 14, cy + 20);
+  c.lineTo(cx + 11, cy +  2);
+  c.closePath();
+  c.fillStyle = sg; c.fill();
+
+  // Cockpit dome
+  c.shadowColor = '#ffeedd'; c.shadowBlur = 10;
+  const cpg = c.createLinearGradient(cx - 7, cy - 24, cx + 7, cy - 6);
+  cpg.addColorStop(0, '#ffffff'); cpg.addColorStop(1, '#ffcc88');
+  c.fillStyle = cpg;
+  c.beginPath();
+  c.moveTo(cx,     cy - 24);
+  c.lineTo(cx - 7, cy - 10);
+  c.lineTo(cx,     cy -  4);
+  c.lineTo(cx + 7, cy - 10);
+  c.closePath();
+  c.fill();
+
+  // Wide engine bank
+  c.shadowColor = '#ff4400'; c.shadowBlur = 14;
+  c.fillStyle = acc;
+  c.fillRect(cx - 16, cy + 14, 32, 8);
+  c.fillStyle = '#ff6600';
+  c.fillRect(cx - 14, cy + 17, 28, 4);
+
+  // Forward nose gun
+  c.shadowColor = col; c.shadowBlur = 6;
+  c.fillStyle = '#ffddbb';
+  c.fillRect(cx - 1, cy - 38, 2, 10);
+
+  // Under-wing gun pods
+  c.fillStyle = '#ffbb88';
+  c.fillRect(cx - 28, cy - 2, 8, 3);
+  c.fillRect(cx + 20, cy - 2, 8, 3);
+}
+
+// THUNDER-9 — heavy assault cruiser (laser/purple)
+function _previewThunder(c, cx, cy, col, acc) {
+  // Wide triple engine flames with purple tint
+  c.globalAlpha = 0.85;
+  for (const xo of [-15, 0, 15]) {
+    _previewFlame(c, cx + xo, cy + 20, 5, 14, '#ee44ff', '#660099');
+  }
+  c.globalAlpha = 1;
+
+  // Body glow
+  c.shadowColor = col; c.shadowBlur = 20;
+
+  // Main heavy body
+  const bg = c.createLinearGradient(cx, cy - 26, cx, cy + 22);
+  bg.addColorStop(0, '#f0d0ff'); bg.addColorStop(0.3, col); bg.addColorStop(1, acc);
+  c.beginPath();
+  c.moveTo(cx,      cy - 24);  // nose
+  c.lineTo(cx - 18, cy -  6);  // left shoulder
+  c.lineTo(cx - 26, cy + 10);  // left flank
+  c.lineTo(cx - 20, cy + 22);  // left engine
+  c.lineTo(cx + 20, cy + 22);  // right engine
+  c.lineTo(cx + 26, cy + 10);  // right flank
+  c.lineTo(cx + 18, cy -  6);  // right shoulder
+  c.closePath();
+  c.fillStyle = bg; c.fill();
+
+  // Shoulder weapon pods
+  c.shadowBlur = 10;
+  c.fillStyle = acc;
+  c.fillRect(cx - 32, cy - 10, 14, 22);
+  c.fillRect(cx + 18, cy - 10, 14, 22);
+
+  // Pod cannon barrels
+  c.shadowColor = col; c.shadowBlur = 6;
+  c.fillStyle = '#dd88ff';
+  c.fillRect(cx - 36, cy - 2, 6, 3);
+  c.fillRect(cx + 30, cy - 2, 6, 3);
+  // Pod sensors
+  c.fillStyle = col;
+  c.fillRect(cx - 30, cy - 8, 4, 4);
+  c.fillRect(cx + 26, cy - 8, 4, 4);
+
+  // Center fuselage
+  c.shadowBlur = 8;
+  const sg = c.createLinearGradient(cx, cy - 22, cx, cy + 20);
+  sg.addColorStop(0, '#ffffff'); sg.addColorStop(0.4, col); sg.addColorStop(1, acc);
+  c.beginPath();
+  c.moveTo(cx,      cy - 22);
+  c.lineTo(cx - 12, cy -  2);
+  c.lineTo(cx - 14, cy + 22);
+  c.lineTo(cx + 14, cy + 22);
+  c.lineTo(cx + 12, cy -  2);
+  c.closePath();
+  c.fillStyle = sg; c.fill();
+
+  // Central laser cannon barrel
+  c.shadowColor = '#ff00ff'; c.shadowBlur = 16;
+  c.fillStyle = '#ee00ff';
+  c.fillRect(cx - 3, cy - 34, 6, 12);   // barrel tip (protrudes above nose)
+  c.fillStyle = acc;
+  c.fillRect(cx - 5, cy - 23, 10, 9);   // cannon housing
+
+  // Cockpit (round dome)
+  c.shadowColor = '#ee88ff'; c.shadowBlur = 10;
+  const cpg = c.createRadialGradient(cx - 2, cy - 10, 1, cx, cy - 8, 7);
+  cpg.addColorStop(0, '#ffffff'); cpg.addColorStop(1, '#dd88ff');
+  c.fillStyle = cpg;
+  c.beginPath(); c.arc(cx, cy - 8, 7, 0, Math.PI * 2); c.fill();
+
+  // Engine bank
+  c.shadowColor = col; c.shadowBlur = 14;
+  c.fillStyle = acc;
+  c.fillRect(cx - 20, cy + 15, 40, 8);
+  c.fillStyle = '#9900cc';
+  for (const xo of [-12, 0, 12]) {
+    c.fillRect(cx + xo - 4, cy + 17, 8, 5);
+  }
 }
 
 function _removeSprite(s) {
